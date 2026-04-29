@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wireframe: url-to-markdown</title>
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+  :root {
+    --w-bg: #f5f5f5;
+    --w-border: #ccc;
+    --w-text: #555;
+    --w-muted: #aaa;
+    --w-fill: #eee;
+  }
+
+  * {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    color: var(--w-text);
+  }
+
+  body { background: var(--w-bg); }
+
+  nav { position: sticky; top: 0; z-index: 40; background: var(--w-bg); border-bottom: 1px solid var(--w-border); }
+  nav button { cursor: pointer; font-size: 13px; }
+  nav button:hover { background: var(--w-fill); border-radius: 4px; }
+  nav button.active { font-weight: bold; border-bottom: 2px solid var(--w-text); }
+
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  .vp-toggle button {
+    font-size: 12px; padding: 2px 8px;
+    border: 1px solid var(--w-border); cursor: pointer; background: white;
+  }
+  .vp-toggle button:first-child { border-radius: 4px 0 0 4px; }
+  .vp-toggle button:last-child { border-radius: 0 4px 4px 0; border-left: none; }
+  .vp-toggle button.active { background: var(--w-text); color: white; }
+
+  body.viewport-mobile .screen-content {
+    max-width: 375px !important;
+    margin: 24px auto !important;
+    border: 2px solid var(--w-border);
+    border-radius: 24px;
+    min-height: 667px;
+    background: white;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    padding: 32px 16px !important;
+  }
+
+  .screen-notes {
+    background: #fffde7;
+    border-left: 3px solid #ffd54f;
+    padding: 12px 16px;
+    margin-top: 24px;
+    font-size: 13px;
+    border-radius: 0 4px 4px 0;
+  }
+  .screen-notes summary {
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 12px;
+    color: #b0a050;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .screen-notes p { margin: 6px 0 2px; color: #777; }
+  .screen-notes ul { margin: 4px 0 0 16px; padding: 0; color: #777; }
+  .screen-notes li { margin: 2px 0; }
+
+  /* Wireframe UI helpers */
+  .w-input {
+    border: 1px solid var(--w-border);
+    background: white;
+    padding: 8px 10px;
+    font-size: 13px;
+    border-radius: 4px;
+    color: var(--w-text);
+  }
+  .w-btn {
+    border: 1px solid var(--w-border);
+    background: var(--w-fill);
+    padding: 6px 12px;
+    font-size: 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .w-btn-primary {
+    border: 1px solid var(--w-text);
+    background: var(--w-text);
+    color: white;
+    padding: 6px 14px;
+    font-size: 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .w-btn-active {
+    border: 1px solid var(--w-text);
+    background: var(--w-text);
+    color: white;
+  }
+  .w-card {
+    border: 1px solid var(--w-border);
+    background: white;
+    border-radius: 6px;
+    padding: 16px;
+  }
+  .w-divider {
+    border: none;
+    border-top: 1px solid var(--w-border);
+    margin: 16px 0;
+  }
+  .w-badge {
+    display: inline-block;
+    background: var(--w-fill);
+    border: 1px solid var(--w-border);
+    border-radius: 3px;
+    padding: 1px 6px;
+    font-size: 11px;
+    color: var(--w-muted);
+  }
+  .w-error {
+    color: #c0392b;
+    font-size: 12px;
+    margin-top: 4px;
+  }
+  .w-success-badge {
+    background: #e8f5e9;
+    border: 1px solid #a5d6a7;
+    color: #388e3c;
+    border-radius: 3px;
+    padding: 2px 8px;
+    font-size: 11px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .w-spinner {
+    display: inline-block;
+    width: 16px; height: 16px;
+    border: 2px solid var(--w-border);
+    border-top-color: var(--w-text);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .w-markdown-preview {
+    border: 1px solid var(--w-border);
+    background: white;
+    border-radius: 4px;
+    padding: 16px;
+    font-size: 13px;
+    line-height: 1.7;
+  }
+  .w-markdown-preview h1 { font-size: 18px; font-weight: bold; margin-bottom: 8px; }
+  .w-markdown-preview h2 { font-size: 15px; font-weight: bold; margin: 12px 0 6px; }
+  .w-markdown-preview p { margin-bottom: 8px; color: var(--w-text); }
+  .w-markdown-preview ul { margin-left: 16px; margin-bottom: 8px; }
+  .w-markdown-preview li { margin-bottom: 2px; }
+  .w-markdown-preview blockquote {
+    border-left: 3px solid var(--w-border);
+    padding-left: 10px;
+    color: var(--w-muted);
+    margin: 8px 0;
+  }
+</style>
+</head>
+<body class="p-0 m-0 viewport-mobile">
+
+<nav class="flex items-center gap-2 px-6 py-2 flex-wrap">
+  <span class="text-xs" style="color:var(--w-muted)">wireframe</span>
+  <button id="nav-0" onclick="show(0)" class="px-2 py-1">0. 초기</button>
+  <button id="nav-1" onclick="show(1)" class="px-2 py-1">1. 변환 중</button>
+  <button id="nav-2" onclick="show(2)" class="px-2 py-1">2. 결과</button>
+  <button id="nav-3" onclick="show(3)" class="px-2 py-1">3. 직접 입력</button>
+  <button id="nav-4" onclick="show(4)" class="px-2 py-1">4. 에러</button>
+  <div class="vp-toggle flex ml-auto">
+    <button id="vp-desktop" onclick="setViewport('desktop')">Desktop</button>
+    <button id="vp-mobile" onclick="setViewport('mobile')" class="active">Mobile</button>
+  </div>
+</nav>
+
+<!-- Screen 0: 초기 화면 -->
+<div id="screen-0" class="screen" data-scenario="scenario-1-given, scenario-2">
+  <div class="screen-content @container max-w-2xl mx-auto p-6">
+
+    <h2 class="text-lg font-bold mb-5" style="color:var(--w-muted); border-bottom:1px solid var(--w-border); padding-bottom:8px;">
+      초기 화면
+    </h2>
+
+    <!-- Header bar -->
+    <div class="flex items-center justify-between mb-6">
+      <span class="font-bold text-sm">URL → Markdown</span>
+      <button class="w-btn flex items-center gap-1 text-xs">
+        <i data-lucide="moon" style="width:14px;height:14px"></i>
+        다크모드
+      </button>
+    </div>
+
+    <!-- URL Input -->
+    <div class="w-card">
+      <label class="text-xs mb-2 block" style="color:var(--w-muted)">URL</label>
+      <div class="flex gap-2">
+        <input class="w-input flex-1 min-w-0" placeholder="https://example.com/article" readonly />
+        <button class="w-btn flex items-center gap-1">
+          <i data-lucide="x" style="width:13px;height:13px"></i>
+          지우기
+        </button>
+        <button class="w-btn-primary flex items-center gap-1">
+          변환
+          <i data-lucide="arrow-right" style="width:13px;height:13px"></i>
+        </button>
+      </div>
+      <p class="text-xs mt-3" style="color:var(--w-muted)">웹 페이지 URL을 붙여넣고 변환 버튼을 누르세요.</p>
+    </div>
+
+    <div class="screen-notes">
+      <details open>
+        <summary>Notes</summary>
+        <ul>
+          <li>트리거: 앱 첫 진입 또는 지우기 버튼 클릭 후</li>
+          <li>인터랙션: URL 입력 → "변환" 클릭 → 변환 중 화면으로 전환</li>
+          <li>인터랙션: "지우기" 클릭 → 입력 필드 초기화 (이미 빈 상태면 비활성)</li>
+          <li>인터랙션: 다크모드 토글 → 테마 전환 (모든 화면 공통)</li>
+          <li>전환: 변환 버튼 클릭 → 화면 1(변환 중)</li>
+        </ul>
+      </details>
+    </div>
+
+  </div>
+</div>
+
+<!-- Screen 1: 변환 중 -->
+<div id="screen-1" class="screen" data-scenario="scenario-1-loading">
+  <div class="screen-content @container max-w-2xl mx-auto p-6">
+
+    <h2 class="text-lg font-bold mb-5" style="color:var(--w-muted); border-bottom:1px solid var(--w-border); padding-bottom:8px;">
+      변환 중
+    </h2>
+
+    <!-- Header bar -->
+    <div class="flex items-center justify-between mb-6">
+      <span class="font-bold text-sm">URL → Markdown</span>
+      <button class="w-btn flex items-center gap-1 text-xs">
+        <i data-lucide="moon" style="width:14px;height:14px"></i>
+        다크모드
+      </button>
+    </div>
+
+    <!-- URL Input (filled, disabled during loading) -->
+    <div class="w-card">
+      <label class="text-xs mb-2 block" style="color:var(--w-muted)">URL</label>
+      <div class="flex gap-2">
+        <input class="w-input flex-1 min-w-0" value="https://example.com/article" readonly style="opacity:0.6;" />
+        <button class="w-btn flex items-center gap-1" style="opacity:0.4; cursor:not-allowed;">
+          <i data-lucide="x" style="width:13px;height:13px"></i>
+          지우기
+        </button>
+        <button class="w-btn-primary flex items-center gap-1" style="opacity:0.4; cursor:not-allowed;">
+          변환
+          <i data-lucide="arrow-right" style="width:13px;height:13px"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Loading state -->
+    <div class="w-card mt-4 flex items-center gap-3">
+      <div class="w-spinner"></div>
+      <span class="text-sm" style="color:var(--w-muted)">페이지를 변환하는 중...</span>
+    </div>
+
+    <div class="screen-notes">
+      <details open>
+        <summary>Notes</summary>
+        <ul>
+          <li>트리거: 변환 버튼 클릭 후</li>
+          <li>인터랙션: 변환 중 버튼·입력 비활성 (조작 불가)</li>
+          <li>전환: 변환 완료 → 화면 2(결과), 변환 실패 → 화면 4(에러)</li>
+        </ul>
+      </details>
+    </div>
+
+  </div>
+</div>
+
+<!-- Screen 2: 결과 화면 -->
+<div id="screen-2" class="screen" data-scenario="scenario-1-success, scenario-4, scenario-5, scenario-6, scenario-7">
+  <div class="screen-content @container max-w-2xl mx-auto p-6">
+
+    <h2 class="text-lg font-bold mb-5" style="color:var(--w-muted); border-bottom:1px solid var(--w-border); padding-bottom:8px;">
+      결과 화면
+    </h2>
+
+    <!-- Header bar -->
+    <div class="flex items-center justify-between mb-6">
+      <span class="font-bold text-sm">URL → Markdown</span>
+      <button class="w-btn flex items-center gap-1 text-xs">
+        <i data-lucide="moon" style="width:14px;height:14px"></i>
+        다크모드
+      </button>
+    </div>
+
+    <!-- URL Input (filled) -->
+    <div class="w-card mb-4">
+      <label class="text-xs mb-2 block" style="color:var(--w-muted)">URL</label>
+      <div class="flex gap-2">
+        <input class="w-input flex-1 min-w-0" value="https://example.com/article" readonly />
+        <button class="w-btn flex items-center gap-1">
+          <i data-lucide="x" style="width:13px;height:13px"></i>
+          지우기
+        </button>
+        <button class="w-btn-primary flex items-center gap-1">
+          변환
+          <i data-lucide="arrow-right" style="width:13px;height:13px"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Result: Article header -->
+    <div class="w-card mb-4">
+      <div class="flex items-start gap-2 mb-1">
+        <i data-lucide="file-text" style="width:16px;height:16px;flex-shrink:0;margin-top:2px"></i>
+        <div>
+          <div class="font-bold text-sm">Understanding Async/Await in JavaScript</div>
+          <div class="text-xs mt-1 flex items-center gap-2" style="color:var(--w-muted)">
+            <i data-lucide="user" style="width:12px;height:12px"></i>
+            Jane Smith
+            <span style="color:var(--w-border)">|</span>
+            <i data-lucide="calendar" style="width:12px;height:12px"></i>
+            2024-03-15
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Markdown preview -->
+    <div class="w-markdown-preview mb-4" style="max-height:220px; overflow-y:auto;">
+      <h1>Understanding Async/Await in JavaScript</h1>
+      <p>Async/await is a modern syntax for handling asynchronous operations in JavaScript, built on top of Promises.</p>
+      <h2>Why Use Async/Await?</h2>
+      <p>It makes asynchronous code look and behave like synchronous code, improving readability significantly.</p>
+      <blockquote>Async functions always return a Promise, even if you don't explicitly return one.</blockquote>
+      <ul>
+        <li>Cleaner than Promise chains</li>
+        <li>Easier error handling with try/catch</li>
+        <li>Supports sequential and parallel execution</li>
+      </ul>
+    </div>
+
+    <hr class="w-divider" />
+
+    <!-- Prompt selector -->
+    <div class="mb-4">
+      <div class="text-xs mb-2" style="color:var(--w-muted)">프롬프트 (선택)</div>
+      <div class="flex gap-2 flex-wrap">
+        <button class="w-btn text-xs">요약해줘</button>
+        <button class="w-btn text-xs w-btn-active">한국어로 번역해줘</button>
+        <button class="w-btn text-xs">쉽게 설명해줘</button>
+        <button class="w-btn text-xs">직접 입력</button>
+      </div>
+      <p class="text-xs mt-1" style="color:var(--w-muted)">↑ "한국어로 번역해줘" 프리셋 선택됨 상태</p>
+    </div>
+
+    <!-- Export actions -->
+    <div class="w-card">
+      <div class="text-xs mb-3" style="color:var(--w-muted)">내보내기</div>
+      <div class="flex gap-2 flex-wrap">
+        <button class="w-btn flex items-center gap-1 text-xs">
+          <i data-lucide="copy" style="width:13px;height:13px"></i>
+          복사하기
+        </button>
+        <button class="w-btn flex items-center gap-1 text-xs">
+          <i data-lucide="download" style="width:13px;height:13px"></i>
+          다운로드 .md
+        </button>
+        <button class="w-btn-primary flex items-center gap-1 text-xs">
+          <i data-lucide="external-link" style="width:13px;height:13px"></i>
+          ChatGPT로 열기
+        </button>
+        <button class="w-btn-primary flex items-center gap-1 text-xs">
+          <i data-lucide="external-link" style="width:13px;height:13px"></i>
+          Claude로 열기
+        </button>
+      </div>
+      <!-- Copy feedback (shown briefly after copy) -->
+      <div class="mt-2">
+        <span class="w-success-badge">
+          <i data-lucide="check" style="width:11px;height:11px"></i>
+          복사됨
+        </span>
+        <span class="text-xs ml-2" style="color:var(--w-muted)">← 복사 완료 피드백 (잠시 표시)</span>
+      </div>
+    </div>
+
+    <div class="screen-notes">
+      <details open>
+        <summary>Notes</summary>
+        <ul>
+          <li>트리거: 변환 성공 후 진입</li>
+          <li>인터랙션: "지우기" → 초기 화면 복귀, 입력·결과 초기화</li>
+          <li>인터랙션: 프리셋 선택 → 해당 항목 활성 표시, 다른 프리셋 자동 해제</li>
+          <li>인터랙션: "직접 입력" 선택 → 화면 3(직접 입력 활성)으로 전환</li>
+          <li>인터랙션: "복사하기" → 클립보드 복사 + "복사됨" 피드백</li>
+          <li>인터랙션: "다운로드 .md" → 파일 다운로드 시작</li>
+          <li>인터랙션: "ChatGPT/Claude로 열기" → 새 탭 + 클립보드 복사 + 피드백</li>
+        </ul>
+      </details>
+    </div>
+
+  </div>
+</div>
+
+<!-- Screen 3: 직접 입력 활성 -->
+<div id="screen-3" class="screen" data-scenario="scenario-8">
+  <div class="screen-content @container max-w-2xl mx-auto p-6">
+
+    <h2 class="text-lg font-bold mb-5" style="color:var(--w-muted); border-bottom:1px solid var(--w-border); padding-bottom:8px;">
+      직접 입력 프롬프트
+    </h2>
+
+    <!-- Header bar -->
+    <div class="flex items-center justify-between mb-6">
+      <span class="font-bold text-sm">URL → Markdown</span>
+      <button class="w-btn flex items-center gap-1 text-xs">
+        <i data-lucide="moon" style="width:14px;height:14px"></i>
+        다크모드
+      </button>
+    </div>
+
+    <!-- URL Input -->
+    <div class="w-card mb-4">
+      <label class="text-xs mb-2 block" style="color:var(--w-muted)">URL</label>
+      <div class="flex gap-2">
+        <input class="w-input flex-1 min-w-0" value="https://example.com/article" readonly />
+        <button class="w-btn flex items-center gap-1">
+          <i data-lucide="x" style="width:13px;height:13px"></i>
+          지우기
+        </button>
+        <button class="w-btn-primary flex items-center gap-1">
+          변환
+          <i data-lucide="arrow-right" style="width:13px;height:13px"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Article header (collapsed summary) -->
+    <div class="w-card mb-4">
+      <div class="flex items-start gap-2">
+        <i data-lucide="file-text" style="width:16px;height:16px;flex-shrink:0;margin-top:2px"></i>
+        <div>
+          <div class="font-bold text-sm">Understanding Async/Await in JavaScript</div>
+          <div class="text-xs mt-1" style="color:var(--w-muted)">Jane Smith</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Markdown preview (collapsed) -->
+    <div class="w-markdown-preview mb-4" style="max-height:120px; overflow-y:auto;">
+      <p style="color:var(--w-muted); font-size:12px;">[ Markdown 내용 ... ]</p>
+    </div>
+
+    <hr class="w-divider" />
+
+    <!-- Prompt selector — 직접 입력 활성 -->
+    <div class="mb-4">
+      <div class="text-xs mb-2" style="color:var(--w-muted)">프롬프트 (선택)</div>
+      <div class="flex gap-2 flex-wrap mb-2">
+        <button class="w-btn text-xs">요약해줘</button>
+        <button class="w-btn text-xs">한국어로 번역해줘</button>
+        <button class="w-btn text-xs">쉽게 설명해줘</button>
+        <button class="w-btn text-xs w-btn-active">직접 입력</button>
+      </div>
+      <!-- 직접 입력 필드 (직접 입력 선택 시 노출) -->
+      <input class="w-input w-full text-xs" placeholder="프롬프트를 입력하세요 (1회용, 저장 안 됨)" />
+    </div>
+
+    <!-- Export actions -->
+    <div class="w-card">
+      <div class="text-xs mb-3" style="color:var(--w-muted)">내보내기</div>
+      <div class="flex gap-2 flex-wrap">
+        <button class="w-btn flex items-center gap-1 text-xs">
+          <i data-lucide="copy" style="width:13px;height:13px"></i>
+          복사하기
+        </button>
+        <button class="w-btn flex items-center gap-1 text-xs">
+          <i data-lucide="download" style="width:13px;height:13px"></i>
+          다운로드 .md
+        </button>
+        <button class="w-btn-primary flex items-center gap-1 text-xs">
+          <i data-lucide="external-link" style="width:13px;height:13px"></i>
+          ChatGPT로 열기
+        </button>
+        <button class="w-btn-primary flex items-center gap-1 text-xs">
+          <i data-lucide="external-link" style="width:13px;height:13px"></i>
+          Claude로 열기
+        </button>
+      </div>
+    </div>
+
+    <div class="screen-notes">
+      <details open>
+        <summary>Notes</summary>
+        <ul>
+          <li>트리거: 결과 화면에서 "직접 입력" 탭 선택 시</li>
+          <li>인터랙션: 직접 입력 필드에 텍스트 입력 → LLM 열기 시 해당 텍스트가 프롬프트로 사용됨</li>
+          <li>인터랙션: 프리셋 선택 클릭 → 직접 입력 필드 사라지고 해당 프리셋 활성 (화면 2로 복귀)</li>
+          <li>인터랙션: "지우기" → 직접 입력값 포함 전체 초기화, 초기 화면으로 복귀</li>
+        </ul>
+      </details>
+    </div>
+
+  </div>
+</div>
+
+<!-- Screen 4: 에러 상태 -->
+<div id="screen-4" class="screen" data-scenario="scenario-3">
+  <div class="screen-content @container max-w-2xl mx-auto p-6">
+
+    <h2 class="text-lg font-bold mb-5" style="color:var(--w-muted); border-bottom:1px solid var(--w-border); padding-bottom:8px;">
+      에러 상태
+    </h2>
+
+    <!-- Header bar -->
+    <div class="flex items-center justify-between mb-6">
+      <span class="font-bold text-sm">URL → Markdown</span>
+      <button class="w-btn flex items-center gap-1 text-xs">
+        <i data-lucide="moon" style="width:14px;height:14px"></i>
+        다크모드
+      </button>
+    </div>
+
+    <!-- URL Input with error -->
+    <div class="w-card">
+      <label class="text-xs mb-2 block" style="color:var(--w-muted)">URL</label>
+      <div class="flex gap-2">
+        <input class="w-input flex-1 min-w-0" value="not-a-valid-url" readonly style="border-color:#e57373;" />
+        <button class="w-btn flex items-center gap-1">
+          <i data-lucide="x" style="width:13px;height:13px"></i>
+          지우기
+        </button>
+        <button class="w-btn-primary flex items-center gap-1">
+          변환
+          <i data-lucide="arrow-right" style="width:13px;height:13px"></i>
+        </button>
+      </div>
+      <!-- Inline error message -->
+      <div class="w-error flex items-center gap-1 mt-2">
+        <i data-lucide="alert-circle" style="width:13px;height:13px;color:#c0392b"></i>
+        URL을 변환할 수 없습니다. 주소를 확인하고 다시 시도해 주세요.
+      </div>
+    </div>
+
+    <div class="screen-notes">
+      <details open>
+        <summary>Notes</summary>
+        <ul>
+          <li>트리거: 변환 실패 (잘못된 URL 형식, 접근 불가 사이트, 파싱 실패)</li>
+          <li>인터랙션: 에러 메시지는 입력 필드 바로 아래 인라인으로 표시</li>
+          <li>인터랙션: 입력 필드 값은 유지됨, 수정 후 재시도 가능</li>
+          <li>인터랙션: "지우기" 클릭 → 에러 메시지 포함 전체 초기화</li>
+          <li>전환: URL 수정 후 "변환" 재클릭 → 화면 1(변환 중)</li>
+        </ul>
+      </details>
+    </div>
+
+  </div>
+</div>
+
+<!--
+  ──────────────────────────────────────
+  화면 삽입 패턴 (이 주석은 삭제하지 않는다)
+  ──────────────────────────────────────
+
+  NAV_BUTTONS 위치에 삽입:
+  <button id="nav-0" onclick="show(0)" class="px-2 py-1">화면 이름</button>
+
+  SCREEN_CONTENT 위치에 삽입:
+  <div id="screen-0" class="screen" data-scenario="FEATURE-001, FEATURE-002">
+    <div class="screen-content @container max-w-6xl mx-auto p-6">
+
+      <h2 class="text-lg font-bold mb-5" style="color:var(--w-muted); border-bottom:1px solid var(--w-border); padding-bottom:8px;">
+        화면 이름
+      </h2>
+
+      여기에 와이어프레임 컨텐츠 작성
+      반응형: 모바일 우선 → @md: 접두사로 데스크톱 레이아웃
+
+      <div class="screen-notes">
+        <details open>
+          <summary>Notes</summary>
+          <p>화면 목적과 사용자 행동 설명</p>
+          <ul>
+            <li>트리거: 이 화면으로 진입하는 조건</li>
+            <li>인터랙션: 주요 사용자 동작</li>
+            <li>전환: 다른 화면으로 이동하는 조건</li>
+          </ul>
+        </details>
+      </div>
+
+    </div>
+  </div>
+-->
+
+<script>
+var currentScreen = 0;
+var screenIds = [];
+
+function show(id) {
+  document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
+  document.getElementById('screen-' + id).classList.add('active');
+  document.querySelectorAll('nav button[id^="nav-"]').forEach(function(b) { b.classList.remove('active'); });
+  document.getElementById('nav-' + id).classList.add('active');
+  currentScreen = screenIds.indexOf(id);
+}
+
+function setViewport(mode) {
+  document.body.classList.remove('viewport-mobile', 'viewport-desktop');
+  document.body.classList.add('viewport-' + mode);
+  document.querySelectorAll('.vp-toggle button').forEach(function(b) { b.classList.remove('active'); });
+  document.getElementById('vp-' + mode).classList.add('active');
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('nav button[id^="nav-"]').forEach(function(b) {
+    screenIds.push(parseInt(b.id.replace('nav-', '')));
+  });
+  var first = document.querySelector('nav button[id^="nav-"]');
+  if (first) first.click();
+  lucide.createIcons();
+});
+</script>
+</body>
+</html>
