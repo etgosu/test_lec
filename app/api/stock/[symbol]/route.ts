@@ -1,11 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import yahooFinance from 'yahoo-finance2'
+import { yfQuote, yfChart, yfSearch } from '@/lib/yahoo'
 import type { StockResponse } from '@/types/stock'
-
-type YFAny = (symbol: string, options?: object) => Promise<Record<string, unknown>>
-const yfQuote = yahooFinance.quote as unknown as YFAny
-const yfChart = yahooFinance.chart as unknown as YFAny
-const yfSearch = yahooFinance.search as unknown as YFAny
 
 function normalizeSymbol(raw: string): string {
   if (/^\d{6}$/.test(raw)) return raw + '.KS'

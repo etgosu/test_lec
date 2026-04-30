@@ -1,17 +1,15 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest'
 
-vi.mock('yahoo-finance2', () => ({
-  default: {
-    quote: vi.fn(),
-    chart: vi.fn(),
-    search: vi.fn(),
-  },
+vi.mock('@/lib/yahoo', () => ({
+  yfQuote: vi.fn(),
+  yfChart: vi.fn(),
+  yfSearch: vi.fn(),
 }))
 
-import yahooFinance from 'yahoo-finance2'
+import { yfQuote, yfChart, yfSearch } from '@/lib/yahoo'
 import { GET } from './route'
 
-const mockQuote = {
+const baseQuote = {
   symbol: 'AAPL',
   longName: 'Apple Inc.',
   fullExchangeName: 'NasdaqGS',
@@ -23,20 +21,16 @@ const mockQuote = {
   regularMarketDayHigh: 194.8,
 }
 
-const mockChart = {
+const baseChart = {
   quotes: [{ date: new Date('2024-01-01T09:30:00Z'), close: 192.45 }],
 }
 
-const mockSearch = {
+const baseSearch = {
   news: Array.from({ length: 3 }, (_, i) => ({
     title: `News ${i}`,
     publisher: 'Reuters',
     link: 'https://example.com',
   })),
-}
-
-function makeReq(symbol: string) {
-  return new Request(`http://localhost/api/stock/${symbol}`) as never
 }
 
 function makeCtx(symbol: string) {
@@ -46,13 +40,13 @@ function makeCtx(symbol: string) {
 describe('GET /api/stock/[symbol]', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(yahooFinance.quote).mockResolvedValue(mockQuote as never)
-    vi.mocked(yahooFinance.chart).mockResolvedValue(mockChart as never)
-    vi.mocked(yahooFinance.search).mockResolvedValue(mockSearch as never)
+    vi.mocked(yfQuote).mockResolvedValue(baseQuote)
+    vi.mocked(yfChart).mockResolvedValue(baseChart)
+    vi.mocked(yfSearch).mockResolvedValue(baseSearch)
   })
 
   it('returns 200 with USD quote fields for AAPL', async () => {
-    const res = await GET(makeReq('AAPL'), makeCtx('AAPL'))
+    const res = await GET({} as never, makeCtx('AAPL'))
     expect(res.status).toBe(200)
     const body = await res.json()
     expect(body.quote.currency).toBe('USD')
@@ -64,46 +58,38 @@ describe('GET /api/stock/[symbol]', () => {
   })
 
   it('auto-appends .KS for 6-digit code', async () => {
-    vi.mocked(yahooFinance.quote).mockResolvedValue({
-      ...mockQuote,
-      symbol: '005930.KS',
-      currency: 'KRW',
-    } as never)
-    const res = await GET(makeReq('005930'), makeCtx('005930'))
+    vi.mocked(yfQuote).mockResolvedValue({ ...baseQuote, symbol: '005930.KS', currency: 'KRW' })
+    const res = await GET({} as never, makeCtx('005930'))
     expect(res.status).toBe(200)
     const body = await res.json()
     expect(body.quote.symbol).toBe('005930.KS')
     expect(body.quote.currency).toBe('KRW')
-    expect(vi.mocked(yahooFinance.quote)).toHaveBeenCalledWith('005930.KS')
+    expect(yfQuote).toHaveBeenCalledWith('005930.KS')
   })
 
   it('does not double-append .KS when suffix is already present', async () => {
-    vi.mocked(yahooFinance.quote).mockResolvedValue({
-      ...mockQuote,
-      symbol: '005930.KS',
-      currency: 'KRW',
-    } as never)
-    await GET(makeReq('005930.KS'), makeCtx('005930.KS'))
-    expect(vi.mocked(yahooFinance.quote)).toHaveBeenCalledWith('005930.KS')
+    vi.mocked(yfQuote).mockResolvedValue({ ...baseQuote, symbol: '005930.KS', currency: 'KRW' })
+    await GET({} as never, makeCtx('005930.KS'))
+    expect(yfQuote).toHaveBeenCalledWith('005930.KS')
   })
 
   it('returns 404 for unknown symbol', async () => {
-    vi.mocked(yahooFinance.quote).mockRejectedValue(new Error('Not found'))
-    const res = await GET(makeReq('XXXXXXX'), makeCtx('XXXXXXX'))
+    vi.mocked(yfQuote).mockRejectedValue(new Error('Not found'))
+    const res = await GET({} as never, makeCtx('XXXXXXX'))
     expect(res.status).toBe(404)
     const body = await res.json()
     expect(body.error).toBeTruthy()
   })
 
   it('limits news to max 5 items', async () => {
-    vi.mocked(yahooFinance.search).mockResolvedValue({
+    vi.mocked(yfSearch).mockResolvedValue({
       news: Array.from({ length: 10 }, (_, i) => ({
         title: `News ${i}`,
         publisher: 'Test',
         link: 'https://example.com',
       })),
-    } as never)
-    const res = await GET(makeReq('AAPL'), makeCtx('AAPL'))
+    })
+    const res = await GET({} as never, makeCtx('AAPL'))
     const body = await res.json()
     expect(body.news.length).toBeLessThanOrEqual(5)
   })
