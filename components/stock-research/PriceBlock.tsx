@@ -1,4 +1,5 @@
-import { cn } from '@/lib/utils'
+import { Badge } from '@/components/ui/badge'
+import { Card, CardContent } from '@/components/ui/card'
 import type { StockQuote } from '@/types/stock'
 
 interface Props {
@@ -25,18 +26,20 @@ export default function PriceBlock({ quote }: Props) {
         <div className="font-bold text-base">{quote.name}</div>
       </div>
 
-      <div className="rounded-lg bg-muted p-4 mb-4">
-        <div className="text-2xl font-bold mb-1">
-          {formatPrice(quote.price, quote.currency)}
-        </div>
-        <div className={cn('text-sm font-bold', isPositive ? 'text-green-600' : 'text-red-600')}>
-          {isPositive ? '▲' : '▼'} {isPositive ? '+' : ''}{quote.changePercent.toFixed(2)}%
-        </div>
-        <div className="flex gap-5 mt-2 text-xs text-muted-foreground">
-          <span>저: {formatPrice(quote.dayLow, quote.currency)}</span>
-          <span>고: {formatPrice(quote.dayHigh, quote.currency)}</span>
-        </div>
-      </div>
+      <Card className="mb-4">
+        <CardContent className="pt-4">
+          <div className="text-2xl font-bold mb-1">
+            {formatPrice(quote.price, quote.currency)}
+          </div>
+          <Badge variant={isPositive ? 'secondary' : 'destructive'}>
+            {isPositive ? '▲' : '▼'} {isPositive ? '+' : ''}{quote.changePercent.toFixed(2)}%
+          </Badge>
+          <div className="flex gap-5 mt-2 text-xs text-muted-foreground">
+            <span>저: {formatPrice(quote.dayLow, quote.currency)}</span>
+            <span>고: {formatPrice(quote.dayHigh, quote.currency)}</span>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }
