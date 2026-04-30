@@ -11,8 +11,8 @@ export default function NewsList({ news }: Props) {
     <div>
       <p className="text-xs font-bold text-muted-foreground border-b pb-1 mb-0">뉴스</p>
       <ul className="flex flex-col">
-        {news.map((item, i) => (
-          <li key={i} className="text-xs py-2 border-b last:border-0">
+        {news.map((item) => (
+          <li key={item.url} className="text-xs py-2 border-b last:border-0">
             <a
               href={item.url}
               target="_blank"

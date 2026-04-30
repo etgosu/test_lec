@@ -6,8 +6,11 @@ interface Props {
 }
 
 function formatPrice(price: number, currency: string): string {
-  if (currency === 'KRW') return '₩' + price.toLocaleString('ko-KR')
-  return '$' + price.toFixed(2)
+  try {
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency, maximumFractionDigits: currency === 'KRW' ? 0 : 2 }).format(price)
+  } catch {
+    return String(price)
+  }
 }
 
 export default function PriceBlock({ quote }: Props) {

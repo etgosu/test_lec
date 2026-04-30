@@ -8,12 +8,6 @@ import NewsList from '@/components/stock-research/NewsList'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { WatchlistItem, StockResponse } from '@/types/stock'
 
-function normalizeInput(input: string): string {
-  const t = input.trim().toUpperCase()
-  if (/^\d{6}$/.test(t)) return t + '.KS'
-  return t
-}
-
 export default function Page() {
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>([])
   const [selectedSymbol, setSelectedSymbol] = useState<string | null>(null)
@@ -23,27 +17,26 @@ export default function Page() {
   const [isAdding, setIsAdding] = useState(false)
 
   async function handleAdd(raw: string) {
-    const normalized = normalizeInput(raw)
-    if (!normalized) return
-    if (watchlist.some((w) => w.symbol === normalized)) return
+    const trimmed = raw.trim()
+    if (!trimmed) return
 
     setIsAdding(true)
     setAddError(null)
 
     try {
-      const res = await fetch(`/api/stock/${encodeURIComponent(raw)}`)
-      if (!res.ok) {
+      const res = await fetch(`/api/stock/${encodeURIComponent(trimmed)}`)
+      const data: StockResponse | { error: string } = await res.json()
+      if (!res.ok || 'error' in data) {
         setAddError('종목을 찾을 수 없습니다')
         return
       }
-      const data: StockResponse = await res.json()
-      const symbol = data.quote.symbol
+      const { symbol, name } = (data as StockResponse).quote
       setWatchlist((prev) =>
         prev.some((w) => w.symbol === symbol)
           ? prev
-          : [...prev, { symbol, name: data.quote.name }],
+          : [...prev, { symbol, name }],
       )
-      await handleSelect(symbol, data)
+      await handleSelect(symbol, data as StockResponse)
     } catch {
       setAddError('종목을 찾을 수 없습니다')
     } finally {
@@ -61,8 +54,13 @@ export default function Page() {
     setStockData(null)
     try {
       const res = await fetch(`/api/stock/${encodeURIComponent(symbol)}`)
-      if (!res.ok) return
+      if (!res.ok) {
+        setAddError('데이터를 불러오지 못했습니다')
+        return
+      }
       setStockData(await res.json())
+    } catch {
+      setAddError('데이터를 불러오지 못했습니다')
     } finally {
       setIsLoading(false)
     }

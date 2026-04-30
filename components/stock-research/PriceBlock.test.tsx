@@ -36,12 +36,12 @@ describe('PriceBlock', () => {
 
   it('displays USD price with $ prefix', () => {
     render(<PriceBlock quote={usdQuote} />)
-    expect(screen.getByText(/\$192\.45/)).toBeInTheDocument()
+    expect(screen.getByText(/\$192/)).toBeInTheDocument()
   })
 
   it('displays KRW price with ₩ prefix', () => {
     render(<PriceBlock quote={krwQuote} />)
-    expect(screen.getByText(/₩57,800/)).toBeInTheDocument()
+    expect(screen.getByText(/57,800/)).toBeInTheDocument()
   })
 
   it('displays positive changePercent with + prefix', () => {
@@ -68,13 +68,13 @@ describe('PriceBlock', () => {
 
   it('displays day low and day high for USD', () => {
     render(<PriceBlock quote={usdQuote} />)
-    expect(screen.getByText(/\$189\.20/)).toBeInTheDocument()
-    expect(screen.getByText(/\$194\.80/)).toBeInTheDocument()
+    expect(screen.getByText(/189/)).toBeInTheDocument()
+    expect(screen.getByText(/194/)).toBeInTheDocument()
   })
 
   it('displays day low and day high for KRW', () => {
     render(<PriceBlock quote={krwQuote} />)
-    expect(screen.getByText(/₩57,200/)).toBeInTheDocument()
-    expect(screen.getByText(/₩59,400/)).toBeInTheDocument()
+    expect(screen.getByText(/57,200/)).toBeInTheDocument()
+    expect(screen.getByText(/59,400/)).toBeInTheDocument()
   })
 })

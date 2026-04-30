@@ -20,7 +20,7 @@ export async function GET(
 
     const [quote, chartData, searchData] = await Promise.all([
       yfQuote(symbol),
-      yfChart(symbol, { period1: today, interval: '5m' }).catch(() => null),
+      yfChart(symbol, { period1: today, interval: '5m' }).catch((e) => { console.error('[chart]', symbol, e); return null }),
       yfSearch(symbol, { newsCount: 5 }).catch(() => ({ news: [] })),
     ])
 
@@ -59,7 +59,12 @@ export async function GET(
     }
 
     return NextResponse.json(response)
-  } catch {
-    return NextResponse.json({ error: 'Symbol not found' }, { status: 404 })
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    const isNotFound = /not found|no data|invalid/i.test(msg)
+    return NextResponse.json(
+      { error: isNotFound ? 'Symbol not found' : 'Failed to fetch data' },
+      { status: isNotFound ? 404 : 502 },
+    )
   }
 }
