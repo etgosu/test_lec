@@ -6,8 +6,8 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
-  title: "Stock Research",
-  description: "Personal stock research tool",
+  title: "주식 리서치",
+  description: "개인용 주식 종목 리서치 도구",
 };
 
 export default function RootLayout({

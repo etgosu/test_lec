@@ -81,6 +81,23 @@ describe('GET /api/stock/[symbol]', () => {
     expect(body.error).toBeTruthy()
   })
 
+  it('resolves by company name when direct ticker lookup fails', async () => {
+    vi.mocked(yfQuote)
+      .mockRejectedValueOnce(new Error('Not found'))       // 1차 직접 조회 실패
+      .mockResolvedValueOnce(baseQuote)                    // 심볼 확정 후 재조회
+    vi.mocked(yfSearch)
+      .mockResolvedValueOnce({                             // 이름 검색 → 심볼 획득
+        quotes: [{ symbol: 'AAPL', quoteType: 'EQUITY' }],
+        news: [],
+      })
+      .mockResolvedValue(baseSearch)                       // 뉴스 조회
+    const res = await GET({} as never, makeCtx('Apple'))
+    expect(res.status).toBe(200)
+    const body = await res.json()
+    expect(body.quote.symbol).toBe('AAPL')
+    expect(yfSearch).toHaveBeenCalledWith('Apple', expect.objectContaining({ quotesCount: 6 }))
+  })
+
   it('limits news to max 5 items', async () => {
     vi.mocked(yfSearch).mockResolvedValue({
       news: Array.from({ length: 10 }, (_, i) => ({

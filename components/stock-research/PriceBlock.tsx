@@ -33,8 +33,8 @@ export default function PriceBlock({ quote }: Props) {
           {isPositive ? '▲' : '▼'} {isPositive ? '+' : ''}{quote.changePercent.toFixed(2)}%
         </div>
         <div className="flex gap-5 mt-2 text-xs text-muted-foreground">
-          <span>{formatPrice(quote.dayLow, quote.currency)}</span>
-          <span>{formatPrice(quote.dayHigh, quote.currency)}</span>
+          <span>저: {formatPrice(quote.dayLow, quote.currency)}</span>
+          <span>고: {formatPrice(quote.dayHigh, quote.currency)}</span>
         </div>
       </div>
     </div>

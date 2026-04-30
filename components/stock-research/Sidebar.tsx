@@ -53,7 +53,7 @@ export default function Sidebar({
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-                placeholder="코드 입력"
+                placeholder="종목명 또는 코드"
                 className="h-7 text-xs"
                 autoFocus
               />
