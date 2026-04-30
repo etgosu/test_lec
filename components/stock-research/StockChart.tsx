@@ -23,7 +23,7 @@ export default function StockChart({ points }: Props) {
   return (
     <div className="mb-4">
       <p className="text-xs text-muted-foreground mb-1">당일 차트</p>
-      <div className="rounded-lg border bg-background p-2" style={{ height: 120 }}>
+      <div className="h-[120px] rounded-lg border bg-background p-2">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
             <XAxis

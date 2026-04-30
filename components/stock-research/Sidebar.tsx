@@ -66,25 +66,29 @@ export default function Sidebar({
                 확인
               </Button>
             </div>
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={handleCancel}
-              className="mt-1 text-xs text-muted-foreground hover:text-foreground"
+              className="mt-1 h-auto p-0 text-xs"
             >
               취소
-            </button>
+            </Button>
           </div>
         ) : (
-          <button
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => setIsInputVisible(true)}
-            className="w-full flex items-center gap-1.5 text-xs px-2 py-1.5 rounded border border-dashed border-border bg-background hover:bg-muted"
+            className="w-full h-auto gap-1.5 border-dashed px-2 py-1.5 text-xs"
           >
             <Plus className="size-3" />
             종목 추가
-          </button>
+          </Button>
         )}
 
         {addError && (
-          <p className="mt-1 text-xs text-red-600">{addError}</p>
+          <p className="mt-1 text-xs text-destructive">{addError}</p>
         )}
       </div>
 
