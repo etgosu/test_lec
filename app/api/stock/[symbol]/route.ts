@@ -1,9 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { yfQuote, yfChart, yfSearch } from '@/lib/yahoo'
+import { resolveKoreanStockName } from '@/lib/korean-stocks'
 import type { StockResponse } from '@/types/stock'
 
 function normalizeSymbol(raw: string): string {
+  // 1. Try Korean stock name mapping
+  if (!/^[0-9.A-Z]+$/i.test(raw)) {
+    const koreanResolved = resolveKoreanStockName(raw)
+    if (koreanResolved !== raw) return koreanResolved
+  }
+
+  // 2. Numeric 6-digit → .KS suffix
   if (/^\d{6}$/.test(raw)) return raw + '.KS'
+  
   return raw
 }
 
