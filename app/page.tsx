@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import Sidebar from '@/components/stock-research/Sidebar'
 import PriceBlock from '@/components/stock-research/PriceBlock'
+import StockChart from '@/components/stock-research/StockChart'
+import NewsList from '@/components/stock-research/NewsList'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { WatchlistItem, StockResponse } from '@/types/stock'
 
@@ -96,7 +98,11 @@ export default function Page() {
         {selectedSymbol && isLoading && <LoadingSkeleton />}
 
         {selectedSymbol && !isLoading && stockData && (
-          <PriceBlock quote={stockData.quote} />
+          <>
+            <PriceBlock quote={stockData.quote} />
+            <StockChart points={stockData.chart} />
+            <NewsList news={stockData.news} />
+          </>
         )}
       </main>
     </div>
