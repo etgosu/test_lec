@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import yahooFinance from 'yahoo-finance2'
 import type { StockResponse } from '@/types/stock'
 
+type YFAny = (symbol: string, options?: object) => Promise<Record<string, unknown>>
+const yfQuote = yahooFinance.quote as unknown as YFAny
+const yfChart = yahooFinance.chart as unknown as YFAny
+const yfSearch = yahooFinance.search as unknown as YFAny
+
 function normalizeSymbol(raw: string): string {
   if (/^\d{6}$/.test(raw)) return raw + '.KS'
   return raw
@@ -19,9 +24,9 @@ export async function GET(
     today.setHours(0, 0, 0, 0)
 
     const [quote, chartData, searchData] = await Promise.all([
-      yahooFinance.quote(symbol),
-      yahooFinance.chart(symbol, { period1: today, interval: '5m' }).catch(() => null),
-      yahooFinance.search(symbol, { newsCount: 5 }).catch(() => ({ news: [] })),
+      yfQuote(symbol),
+      yfChart(symbol, { period1: today, interval: '5m' }).catch(() => null),
+      yfSearch(symbol, { newsCount: 5 }).catch(() => ({ news: [] })),
     ])
 
     if (!quote?.regularMarketPrice) {
@@ -29,10 +34,10 @@ export async function GET(
     }
 
     const chartPoints = ((chartData as { quotes?: { date: Date; close: number | null }[] })?.quotes ?? [])
-      .filter((q) => q.close != null)
-      .map((q) => ({
-        timestamp: q.date instanceof Date ? q.date.getTime() : Number(q.date),
-        close: q.close!,
+      .filter((p) => p.close != null)
+      .map((p) => ({
+        timestamp: p.date instanceof Date ? p.date.getTime() : Number(p.date),
+        close: p.close!,
       }))
 
     const rawNews = (searchData as { news?: { title: string; publisher: string; link: string }[] })?.news ?? []
@@ -48,7 +53,7 @@ export async function GET(
         name: (quote.longName ?? quote.shortName ?? symbol) as string,
         exchange: (quote.fullExchangeName ?? '') as string,
         currency: (quote.currency ?? 'USD') as string,
-        price: quote.regularMarketPrice,
+        price: quote.regularMarketPrice as number,
         change: (quote.regularMarketChange ?? 0) as number,
         changePercent: (quote.regularMarketChangePercent ?? 0) as number,
         dayLow: (quote.regularMarketDayLow ?? 0) as number,
